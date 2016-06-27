@@ -17,10 +17,43 @@
 package org.kaaproject.kaa.server.control.service;
 
 import org.apache.avro.Schema;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.thrift.TException;
 import org.kaaproject.avro.ui.shared.Fqn;
 import org.kaaproject.kaa.common.avro.GenericAvroConverter;
-import org.kaaproject.kaa.common.dto.*;
+import org.kaaproject.kaa.common.dto.AbstractSchemaDto;
+import org.kaaproject.kaa.common.dto.ApplicationDto;
+import org.kaaproject.kaa.common.dto.ChangeConfigurationNotification;
+import org.kaaproject.kaa.common.dto.ChangeNotificationDto;
+import org.kaaproject.kaa.common.dto.ChangeProfileFilterNotification;
+import org.kaaproject.kaa.common.dto.ChangeType;
+import org.kaaproject.kaa.common.dto.ConfigurationDto;
+import org.kaaproject.kaa.common.dto.ConfigurationRecordDto;
+import org.kaaproject.kaa.common.dto.ConfigurationSchemaDto;
+import org.kaaproject.kaa.common.dto.EndpointGroupDto;
+import org.kaaproject.kaa.common.dto.EndpointNotificationDto;
+import org.kaaproject.kaa.common.dto.EndpointProfileBodyDto;
+import org.kaaproject.kaa.common.dto.EndpointProfileDto;
+import org.kaaproject.kaa.common.dto.EndpointProfileSchemaDto;
+import org.kaaproject.kaa.common.dto.EndpointProfilesBodyDto;
+import org.kaaproject.kaa.common.dto.EndpointProfilesPageDto;
+import org.kaaproject.kaa.common.dto.EndpointUserConfigurationDto;
+import org.kaaproject.kaa.common.dto.EndpointUserDto;
+import org.kaaproject.kaa.common.dto.HasId;
+import org.kaaproject.kaa.common.dto.NotificationDto;
+import org.kaaproject.kaa.common.dto.NotificationSchemaDto;
+import org.kaaproject.kaa.common.dto.NotificationTypeDto;
+import org.kaaproject.kaa.common.dto.PageLinkDto;
+import org.kaaproject.kaa.common.dto.ProfileFilterDto;
+import org.kaaproject.kaa.common.dto.ProfileFilterRecordDto;
+import org.kaaproject.kaa.common.dto.ProfileVersionPairDto;
+import org.kaaproject.kaa.common.dto.ServerProfileSchemaDto;
+import org.kaaproject.kaa.common.dto.TenantAdminDto;
+import org.kaaproject.kaa.common.dto.TenantDto;
+import org.kaaproject.kaa.common.dto.TopicDto;
+import org.kaaproject.kaa.common.dto.UpdateNotificationDto;
+import org.kaaproject.kaa.common.dto.UserDto;
+import org.kaaproject.kaa.common.dto.VersionDto;
 import org.kaaproject.kaa.common.dto.admin.RecordKey;
 import org.kaaproject.kaa.common.dto.admin.RecordKey.RecordFiles;
 import org.kaaproject.kaa.common.dto.admin.SdkPlatform;
@@ -30,7 +63,13 @@ import org.kaaproject.kaa.common.dto.credentials.CredentialsStatus;
 import org.kaaproject.kaa.common.dto.credentials.EndpointRegistrationDto;
 import org.kaaproject.kaa.common.dto.ctl.CTLSchemaDto;
 import org.kaaproject.kaa.common.dto.ctl.CTLSchemaMetaInfoDto;
-import org.kaaproject.kaa.common.dto.event.*;
+import org.kaaproject.kaa.common.dto.event.AefMapInfoDto;
+import org.kaaproject.kaa.common.dto.event.ApplicationEventFamilyMapDto;
+import org.kaaproject.kaa.common.dto.event.EcfInfoDto;
+import org.kaaproject.kaa.common.dto.event.EventClassDto;
+import org.kaaproject.kaa.common.dto.event.EventClassFamilyDto;
+import org.kaaproject.kaa.common.dto.event.EventClassType;
+import org.kaaproject.kaa.common.dto.event.EventSchemaVersionDto;
 import org.kaaproject.kaa.common.dto.file.FileData;
 import org.kaaproject.kaa.common.dto.logs.LogAppenderDto;
 import org.kaaproject.kaa.common.dto.logs.LogSchemaDto;
@@ -40,16 +79,39 @@ import org.kaaproject.kaa.server.common.Base64Util;
 import org.kaaproject.kaa.server.common.Version;
 import org.kaaproject.kaa.server.common.core.schema.DataSchema;
 import org.kaaproject.kaa.server.common.core.schema.ProtocolSchema;
-import org.kaaproject.kaa.server.common.dao.*;
+import org.kaaproject.kaa.server.common.dao.ApplicationEventMapService;
+import org.kaaproject.kaa.server.common.dao.ApplicationService;
+import org.kaaproject.kaa.server.common.dao.CTLService;
+import org.kaaproject.kaa.server.common.dao.ConfigurationService;
+import org.kaaproject.kaa.server.common.dao.EndpointRegistrationService;
+import org.kaaproject.kaa.server.common.dao.EndpointService;
+import org.kaaproject.kaa.server.common.dao.EventClassService;
+import org.kaaproject.kaa.server.common.dao.LogAppendersService;
+import org.kaaproject.kaa.server.common.dao.LogSchemaService;
+import org.kaaproject.kaa.server.common.dao.NotificationService;
+import org.kaaproject.kaa.server.common.dao.ProfileService;
+import org.kaaproject.kaa.server.common.dao.SdkProfileService;
+import org.kaaproject.kaa.server.common.dao.ServerProfileService;
+import org.kaaproject.kaa.server.common.dao.TopicService;
+import org.kaaproject.kaa.server.common.dao.UserConfigurationService;
+import org.kaaproject.kaa.server.common.dao.UserService;
+import org.kaaproject.kaa.server.common.dao.UserVerifierService;
 import org.kaaproject.kaa.server.common.dao.exception.CredentialsServiceException;
 import org.kaaproject.kaa.server.common.dao.exception.EndpointRegistrationServiceException;
 import org.kaaproject.kaa.server.common.dao.exception.IncorrectParameterException;
 import org.kaaproject.kaa.server.common.dao.exception.NotFoundException;
-import org.kaaproject.kaa.server.common.dao.service.TrustfulCredentialsService;
 import org.kaaproject.kaa.server.common.log.shared.RecordWrapperSchemaGenerator;
 import org.kaaproject.kaa.server.common.thrift.KaaThriftService;
-import org.kaaproject.kaa.server.common.thrift.gen.operations.*;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.Notification;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.Operation;
 import org.kaaproject.kaa.server.common.thrift.gen.operations.OperationsThriftService.Iface;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.ThriftActorClassifier;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.ThriftClusterEntityType;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.ThriftEndpointDeregistrationMessage;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.ThriftEntityAddress;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.ThriftServerProfileUpdateMessage;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.ThriftUnicastNotificationMessage;
+import org.kaaproject.kaa.server.common.thrift.gen.operations.UserConfigurationUpdate;
 import org.kaaproject.kaa.server.common.zk.control.ControlNode;
 import org.kaaproject.kaa.server.common.zk.gen.OperationsNodeInfo;
 import org.kaaproject.kaa.server.common.zk.operations.OperationsNodeListener;
@@ -75,14 +137,18 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Base64Utils;
-import org.apache.commons.codec.binary.Base64;
 
 import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.kaaproject.kaa.server.admin.shared.util.Utils.isEmpty;
@@ -1118,7 +1184,8 @@ public class DefaultControlService implements ControlService {
 
         boolean isTrustfulCredentialService = isTrustfulCredentialService(sdkProfile.getApplicationId());
         if (!(generator instanceof JavaSdkGenerator)) {
-            isTrustfulCredentialService = true; 
+            LOG.debug("Sdk profile for sdk generation isn't Java SDK");
+            isTrustfulCredentialService = true;
         }
 
         FileData sdkFile = null;
@@ -2270,7 +2337,9 @@ public class DefaultControlService implements ControlService {
 
     @Override
     public boolean isTrustfulCredentialService(String applicationId) {
-        return this.credentialsServiceLocator.getCredentialsService(applicationId) instanceof TrustfulCredentialsService;
+        LOG.debug("DefaultControlService: checking Trustful3" + credentialsServiceLocator.getCredentialsService(applicationId)
+                .isTrustfulCredentialService());
+        return credentialsServiceLocator.getCredentialsService(applicationId).isTrustfulCredentialService();
     }
 
     @Override

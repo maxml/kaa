@@ -16,17 +16,18 @@
 
 package org.kaaproject.kaa.server.node.service.credentials;
 
-import java.util.Optional;
-
+import jline.internal.Log;
 import org.kaaproject.kaa.common.dto.credentials.CredentialsDto;
 import org.kaaproject.kaa.server.common.dao.exception.CredentialsServiceException;
+import org.kaaproject.kaa.server.common.dao.service.TrustfulCredentialsService;
+
+import java.util.Optional;
 
 /**
  * A bridge between the actual interface and the internal Kaa implementation.
  *
  * @author Andrew Shvayka
  * @author Bohdan Khablenko
- *
  * @since v0.9.0
  */
 public final class CredentialsServiceAdapter implements CredentialsService {
@@ -37,7 +38,7 @@ public final class CredentialsServiceAdapter implements CredentialsService {
     /**
      * Constructs an adapter for the given application.
      *
-     * @param applicationId The application ID
+     * @param applicationId      The application ID
      * @param credentialsService The internal credentials service used by Kaa
      */
     public CredentialsServiceAdapter(String applicationId, org.kaaproject.kaa.server.common.dao.CredentialsService credentialsService) {
@@ -63,5 +64,14 @@ public final class CredentialsServiceAdapter implements CredentialsService {
     @Override
     public void markCredentialsRevoked(String credentialsId) throws CredentialsServiceException {
         credentialsService.markCredentialsRevoked(applicationId, credentialsId);
+    }
+
+    @Override
+    public boolean isTrustfulCredentialService() {
+        Log.debug("CredentialsServiceAdapter", " isTrustfulClass3 - " + (credentialsService.getClass()));
+        Log.debug("CredentialsServiceAdapter", " isTrustfulObject3 - " + credentialsService);
+        Log.debug("CredentialsServiceAdapter", " isTrustful3 - " + (credentialsService.getClass() == TrustfulCredentialsService.class));
+
+        return credentialsService.getClass() == TrustfulCredentialsService.class;
     }
 }

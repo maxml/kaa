@@ -16,11 +16,11 @@
 
 package org.kaaproject.kaa.server.node.service.credentials;
 
-import java.util.Optional;
-
 import org.kaaproject.kaa.common.dto.credentials.CredentialsDto;
 import org.kaaproject.kaa.common.dto.credentials.CredentialsStatus;
 import org.kaaproject.kaa.server.common.dao.exception.CredentialsServiceException;
+
+import java.util.Optional;
 
 /**
  * A service that communicates with an external system to manage credentials
@@ -28,7 +28,6 @@ import org.kaaproject.kaa.server.common.dao.exception.CredentialsServiceExceptio
  *
  * @author Bohdan Khablenko
  * @author Andrew Shvayka
- *
  * @since v0.9.0
  */
 public interface CredentialsService {
@@ -37,12 +36,10 @@ public interface CredentialsService {
      * Provide credentials information to the external system.
      *
      * @param credentials The credentials to provision
-     *
      * @return The credentials provided
-     *
      * @throws UnsupportedOperationException - if the underlying implementation
-     *             forbids credentials provisioning.
-     * @throws CredentialsServiceException - if an unexpected exception occures.
+     *                                       forbids credentials provisioning.
+     * @throws CredentialsServiceException   - if an unexpected exception occures.
      */
     CredentialsDto provideCredentials(CredentialsDto credentials) throws CredentialsServiceException;
 
@@ -50,9 +47,7 @@ public interface CredentialsService {
      * Returns the credentials by ID.
      *
      * @param credentialsId The credentials ID
-     *
      * @return The credentials with the given ID
-     *
      * @throws CredentialsServiceException - if an unexpected exception occures.
      */
     Optional<CredentialsDto> lookupCredentials(String credentialsId) throws CredentialsServiceException;
@@ -62,9 +57,8 @@ public interface CredentialsService {
      * {@link CredentialsStatus#IN_USE}.
      *
      * @param credentialsId The credentials ID
-     *
      * @throws CredentialsServiceException - if the credentials are not
-     *             {@link CredentialsStatus#AVAILABLE}.
+     *                                     {@link CredentialsStatus#AVAILABLE}.
      */
     void markCredentialsInUse(String credentialsId) throws CredentialsServiceException;
 
@@ -73,10 +67,14 @@ public interface CredentialsService {
      * {@link CredentialsStatus#REVOKED}.
      *
      * @param credentialsId The credentials ID
-     *
      * @throws UnsupportedOperationException - if the underlying implementation
-     *             forbids credentials revokation.
-     * @throws CredentialsServiceException - if an unexpected exception occures.
+     *                                       forbids credentials revokation.
+     * @throws CredentialsServiceException   - if an unexpected exception occures.
      */
     void markCredentialsRevoked(String credentialsId) throws CredentialsServiceException;
+
+    /**
+     * Check if Credential service is trustful
+     */
+    boolean isTrustfulCredentialService();
 }
