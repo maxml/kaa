@@ -320,6 +320,7 @@ public class KaaClientPropertiesState implements KaaClientState {
         return getOrInitKeyPair().getPrivate();
     }
 
+//5
     private KeyPair getOrInitKeyPair() {
         LOG.debug("Check if key pair exists {}, {}", clientPublicKeyFileLocation, clientPrivateKeyFileLocation);
         if (keyPair != null) {

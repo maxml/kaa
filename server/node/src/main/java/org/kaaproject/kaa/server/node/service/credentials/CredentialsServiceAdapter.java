@@ -68,9 +68,9 @@ public final class CredentialsServiceAdapter implements CredentialsService {
 
     @Override
     public boolean isTrustfulCredentialService() {
-        Log.debug("CredentialsServiceAdapter", " isTrustfulClass3 - " + (credentialsService.getClass()));
-        Log.debug("CredentialsServiceAdapter", " isTrustfulObject3 - " + credentialsService);
-        Log.debug("CredentialsServiceAdapter", " isTrustful3 - " + (credentialsService.getClass() == TrustfulCredentialsService.class));
+        Log.error("CredentialsServiceAdapter", " isTrustfulClass4 - " + (credentialsService.getClass()));
+        Log.error("CredentialsServiceAdapter", " isTrustfulObject4 - " + credentialsService);
+        Log.error("CredentialsServiceAdapter", " isTrustful4 - " + (credentialsService.getClass() == TrustfulCredentialsService.class));
 
         return credentialsService.getClass() == TrustfulCredentialsService.class;
     }

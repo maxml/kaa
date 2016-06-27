@@ -2337,7 +2337,7 @@ public class DefaultControlService implements ControlService {
 
     @Override
     public boolean isTrustfulCredentialService(String applicationId) {
-        LOG.debug("DefaultControlService: checking Trustful3" + credentialsServiceLocator.getCredentialsService(applicationId)
+        LOG.error("DefaultControlService: checking Trustful4" + credentialsServiceLocator.getCredentialsService(applicationId)
                 .isTrustfulCredentialService());
         return credentialsServiceLocator.getCredentialsService(applicationId).isTrustfulCredentialService();
     }
